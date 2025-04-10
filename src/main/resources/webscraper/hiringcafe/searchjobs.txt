@@ -1,0 +1,206 @@
+{
+  "size": 40,
+  "page": 0,
+  "searchState": {
+    "locations": [
+      {
+        "formatted_address": "United States",
+        "types": [
+          "country"
+        ],
+        "geometry": {
+          "location": {
+            "lat": "30.5154",
+            "lon": "-97.6689"
+          }
+        },
+        "id": "user_country",
+        "address_components": [
+          {
+            "long_name": "United States",
+            "short_name": "US",
+            "types": [
+              "country"
+            ]
+          }
+        ],
+        "options": {
+          "flexible_regions": [
+            "anywhere_in_continent",
+            "anywhere_in_world"
+          ]
+        }
+      }
+    ],
+    "workplaceTypes": [
+      "Remote",
+      "Hybrid",
+      "Onsite"
+    ],
+    "defaultToUserLocation": true,
+    "userLocation": null,
+    "physicalEnvironments": [
+      "Office",
+      "Outdoor",
+      "Vehicle",
+      "Industrial",
+      "Customer-Facing"
+    ],
+    "physicalLaborIntensity": [
+      "Low",
+      "Medium",
+      "High"
+    ],
+    "physicalPositions": [
+      "Sitting",
+      "Standing"
+    ],
+    "oralCommunicationLevels": [
+      "Low",
+      "Medium",
+      "High"
+    ],
+    "computerUsageLevels": [
+      "Low",
+      "Medium",
+      "High"
+    ],
+    "cognitiveDemandLevels": [
+      "Low",
+      "Medium",
+      "High"
+    ],
+    "currency": {
+      "label": "Any",
+      "value": null
+    },
+    "frequency": {
+      "label": "Any",
+      "value": null
+    },
+    "minCompensationLowEnd": null,
+    "minCompensationHighEnd": null,
+    "maxCompensationLowEnd": null,
+    "maxCompensationHighEnd": null,
+    "restrictJobsToTransparentSalaries": false,
+    "calcFrequency": "Yearly",
+    "commitmentTypes": [
+      "Full Time",
+      "Part Time",
+      "Contract",
+      "Internship",
+      "Temporary",
+      "Seasonal",
+      "Volunteer"
+    ],
+    "jobTitleQuery": "\"software engineer\"\"software developer\"",
+    "jobDescriptionQuery": "",
+    "associatesDegreeFieldsOfStudy": [],
+    "excludedAssociatesDegreeFieldsOfStudy": [],
+    "bachelorsDegreeFieldsOfStudy": [],
+    "excludedBachelorsDegreeFieldsOfStudy": [],
+    "mastersDegreeFieldsOfStudy": [],
+    "excludedMastersDegreeFieldsOfStudy": [],
+    "doctorateDegreeFieldsOfStudy": [],
+    "excludedDoctorateDegreeFieldsOfStudy": [],
+    "associatesDegreeRequirements": [],
+    "bachelorsDegreeRequirements": [],
+    "mastersDegreeRequirements": [],
+    "doctorateDegreeRequirements": [],
+    "licensesAndCertifications": [],
+    "excludedLicensesAndCertifications": [],
+    "excludeAllLicensesAndCertifications": false,
+    "seniorityLevel": [
+      "Mid Level",
+      "Entry Level"
+    ],
+    "roleTypes": [
+      "Individual Contributor"
+    ],
+    "roleYoeRange": [
+      0,
+      20
+    ],
+    "excludeIfRoleYoeIsNotSpecified": false,
+    "managementYoeRange": [
+      0,
+      20
+    ],
+    "excludeIfManagementYoeIsNotSpecified": false,
+    "securityClearances": [
+      "None",
+      "Confidential",
+      "Secret",
+      "Top Secret",
+      "Top Secret/SCI",
+      "Public Trust",
+      "Interim Clearances",
+      "Other"
+    ],
+    "languageRequirements": [],
+    "excludedLanguageRequirements": [],
+    "languageRequirementsOperator": "OR",
+    "excludeJobsWithAdditionalLanguageRequirements": false,
+    "airTravelRequirement": [
+      "None",
+      "Minimal",
+      "Moderate",
+      "Extensive"
+    ],
+    "landTravelRequirement": [
+      "None",
+      "Minimal",
+      "Moderate",
+      "Extensive"
+    ],
+    "morningShiftWork": [],
+    "eveningShiftWork": [],
+    "overnightShiftWork": [],
+    "weekendAvailabilityRequired": "Doesn't Matter",
+    "holidayAvailabilityRequired": "Doesn't Matter",
+    "overtimeRequired": "Doesn't Matter",
+    "onCallRequirements": [
+      "None",
+      "Occasional (once a month or less)",
+      "Regular (once a week or more)"
+    ],
+    "benefitsAndPerks": [],
+    "applicationFormEase": [],
+    "companyNames": [],
+    "excludedCompanyNames": [],
+    "usaGovPref": null,
+    "industries": [],
+    "excludedIndustries": [],
+    "companyKeywords": [],
+    "companyKeywordsBooleanOperator": "OR",
+    "excludedCompanyKeywords": [],
+    "hideJobTypes": [],
+    "encouragedToApply": [],
+    "searchQuery": "",
+    "dateFetchedPastNDays": 2,
+    "hiddenCompanies": [],
+    "user": null,
+    "searchModeSelectedCompany": null,
+    "departments": [],
+    "restrictedSearchAttributes": [],
+    "sortBy": "date",
+    "technologyKeywordsQuery": "java",
+    "requirementsKeywordsQuery": "",
+    "companyPublicOrPrivate": "all",
+    "latestInvestmentYearRange": [
+      null,
+      null
+    ],
+    "latestInvestmentSeries": [],
+    "latestInvestmentAmount": null,
+    "latestInvestmentCurrency": [],
+    "investors": [],
+    "excludedInvestors": [],
+    "isNonProfit": "all",
+    "companySizeRanges": [],
+    "minYearFounded": null,
+    "maxYearFounded": null,
+    "excludedLatestInvestmentSeries": [],
+    "userId": "dCj4oKuKTmPZLYczN9XhYZKE3kl1"
+  }
+}
