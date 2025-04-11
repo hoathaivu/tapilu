@@ -26,6 +26,7 @@ dependencies {
     implementation("org.apache.poi:poi-ooxml:5.4.1")
     implementation("org.jsoup:jsoup:1.19.1")
     implementation("org.xerial:sqlite-jdbc:3.49.1.0")
+    implementation("com.sun.mail:jakarta.mail:2.0.1")
 
     //Google services
     implementation(platform("com.google.maps:google-maps-places-bom:0.30.0"))

@@ -14,7 +14,7 @@ import java.util.concurrent.*;
 
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
-import static htv.springboot.utils.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 @Service
 public class WebnovelScraperServiceOrchestrator {

@@ -10,8 +10,8 @@ import htv.springboot.apps.webscraper.ScrapperService;
 import java.io.*;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static htv.springboot.utils.StringUtils.isBlank;
 import static htv.springboot.utils.StringUtils.windowsFileName;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 @Getter
 public abstract class WebnovelScraperService extends ScrapperService {

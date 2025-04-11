@@ -1,5 +1,11 @@
 package htv.springboot.apps.webscraper.job;
 
+import htv.springboot.utils.MailUtils;
+import jakarta.mail.Address;
+import jakarta.mail.Flags;
+import jakarta.mail.Header;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,10 +19,17 @@ import htv.springboot.apps.webscraper.job.beans.Job;
 import htv.springboot.apps.webscraper.job.beans.JobStats;
 import htv.springboot.apps.webscraper.job.costofliving.CostOfLivingService;
 import htv.springboot.apps.webscraper.job.costofliving.beans.CoLExcelBean;
+import org.springframework.web.client.RestClient;
 
 import javax.swing.JOptionPane;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import static htv.springboot.utils.MailUtils.UNSUBSCRIBE_HEADER;
 
 @Service
 public class JobService {
@@ -27,16 +40,19 @@ public class JobService {
     private static final String[] BUTTON_OPTIONS = new String[] {"Skip", "Proceed"};
 
     @Autowired
-    private JobScraper jobScraper;
+    private Browser browser;
 
     @Autowired
-    private Browser browser;
+    private CostOfLivingService coLService;
 
     @Autowired
     private JobDatabaseService databaseService;
 
     @Autowired
-    private CostOfLivingService coLService;
+    private JobScraper jobScraper;
+
+    @Autowired
+    private RestClient restClient;
 
     @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.HOURS)
     public void scheduleScraping() throws Exception {
@@ -111,13 +127,58 @@ public class JobService {
         databaseService.createNewJobStatistics(new JobStats(job, maxCoL));
     }
 
+    private static final String YAHOOMAIL_EMAIL_ENV_NAME = "YAHOOMAIL_EMAIL";
+    private static final String YAHOOMAIL_PASSWORD_ENV_NAME = "YAHOOMAIL_APPLICATION_PASSWORD";
+    private static final int EMAIL_SKIP_OPTION = 0;
+    private static final int EMAIL_DELETE_OPTION = 1;
+    private static final int EMAIL_UNSUBSCRIBE_DELETE_OPTION = 2;
+    private static final String[] NORM_EMAIL_BUTTON_OPTIONS = new String[] {"Skip", "Delete"};
+    private static final String[] AD_EMAIL_BUTTON_OPTIONS = new String[] {"Skip", "Delete", "Unsubscribe and Delete"};
+
     @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.HOURS)
-    public void scheduleEmailCheck() {
+    public void scheduleEmailCheck() throws MessagingException, IOException {
+        LOGGER.info("Start scheduleEmailCheck");
         /**
          * 1. When receive job email, check email's content for info
          * 	a. If new jobAppliedStatus, update jobs_applied. If not rejected, go to step #2
          * 	b. If no news, ignore
          * 2. Send notification of the news, together with job's full information
          */
+        String emailAddress = System.getenv(YAHOOMAIL_EMAIL_ENV_NAME);
+        String emailAppPassword = System.getenv(YAHOOMAIL_PASSWORD_ENV_NAME);
+        for (Message email : MailUtils.getUnreadMails(emailAddress, emailAppPassword)) {
+            String msg = String.format("From: %s\nTo: %s\nSubject: %s\nContent:\n%s",
+                    Arrays.stream(email.getFrom()).map(Address::toString).collect(Collectors.joining(",")),
+                    Arrays.stream(email.getAllRecipients()).map(Address::toString).collect(Collectors.joining(",")),
+                    email.getSubject(),
+                    MailUtils.getEmailContent(email));
+
+            String[] buttons = NORM_EMAIL_BUTTON_OPTIONS;
+            Enumeration<Header> enumeration = email.getAllHeaders();
+            while (enumeration.hasMoreElements()) {
+                Header header = enumeration.nextElement();
+                if (UNSUBSCRIBE_HEADER.equals(header.getName())) {
+                    buttons = AD_EMAIL_BUTTON_OPTIONS;
+                    break;
+                }
+            }
+
+            int selected = JavaUtils.createOptionWindow("New email", msg, buttons, 0);
+            switch (selected) {
+                case EMAIL_DELETE_OPTION:
+                    email.setFlag(Flags.Flag.USER, true);
+                    break;
+                case EMAIL_UNSUBSCRIBE_DELETE_OPTION:
+                    email.setFlag(Flags.Flag.USER, true);
+                    MailUtils.unsubscribeFromEmail(email, restClient);
+                    break;
+                case EMAIL_SKIP_OPTION:
+                default:
+            }
+        }
+
+        MailUtils.deleteFlaggedEmails(emailAddress, emailAppPassword, Flags.Flag.USER);
+
+        LOGGER.info("Finished scheduleEmailCheck");
     }
 }
