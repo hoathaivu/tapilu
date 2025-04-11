@@ -35,7 +35,7 @@ public class FirefoxService implements Browser {
         try {
             Runtime.getRuntime().exec(cmdArr);
         } catch (IOException e) {
-            LOGGER.error(e);
+            LOGGER.error(e.getMessage(), e);
         }
     }
 }

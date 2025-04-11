@@ -29,7 +29,9 @@ public class Job {
         jobUrl = jsonObject.get("apply_url").getAsString();
 
         JsonObject processedJob = jsonObject.getAsJsonObject("v5_processed_job_data");
-        companyId = processedJob.get("company_name").getAsString();
+        companyId = processedJob.has("company_name") && !processedJob.get("company_name").isJsonNull() ?
+                processedJob.get("company_name").getAsString()
+                : processedJob.get("company_website").getAsString();
         postedDatetime = OffsetDateTime.parse(processedJob.get("estimated_publish_date").getAsString());
 
         JsonObject jobInformation = jsonObject.getAsJsonObject("job_information");

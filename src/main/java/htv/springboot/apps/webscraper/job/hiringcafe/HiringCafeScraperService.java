@@ -1,7 +1,10 @@
 package htv.springboot.apps.webscraper.job.hiringcafe;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import htv.springboot.utils.FileUtils;
@@ -13,11 +16,11 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class HiringCafeScraperService extends ScrapperService implements JobScraper {
 
+    private static final Logger LOGGER = LogManager.getLogger();
     private static final String REQUEST_URL = "https://hiring.cafe/api/search-jobs";
     private static final String REQUEST_BODY_FILEPATH = "webscraper/hiringcafe/searchjobs.txt";
 
@@ -28,11 +31,15 @@ public class HiringCafeScraperService extends ScrapperService implements JobScra
                 .get("results")
                 .getAsJsonArray();
 
-        return result
-                .asList()
-                .stream()
-                .map(jsonElement -> new Job(jsonElement.getAsJsonObject()))
-                .collect(Collectors.toCollection(ArrayList::new));
+        List<Job> jobList = new ArrayList<>();
+        for (JsonElement jsonElement : result.asList()) {
+            try {
+                jobList.add(new Job(jsonElement.getAsJsonObject()));
+            } catch (Exception e) {
+                LOGGER.error("Failed to parse JsonElement:\n{}", jsonElement, e);
+            }
+        }
+        return jobList;
     }
 
     private String getRequestBody() throws URISyntaxException, IOException {

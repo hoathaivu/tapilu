@@ -31,7 +31,7 @@ public abstract class ScrapperService {
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException ex) {
-                    LOGGER.error(ex);
+                    LOGGER.error(ex.getMessage(), ex);
                     Thread.currentThread().interrupt();
                 }
                 LOGGER.trace("Woke up. Trying again: {}", url);

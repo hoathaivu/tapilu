@@ -40,7 +40,7 @@ public class BookmarkService {
 
             return urlsList.toArray(new String[0]);
         } catch (SQLException e) {
-            LOGGER.error(e);
+            LOGGER.error(e.getMessage(), e);
         }
 
         return new String[0];

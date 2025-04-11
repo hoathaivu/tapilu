@@ -38,7 +38,7 @@ public class WebnovelScraperServiceOrchestrator {
                     try {
                         processByVolumes(url, es, doneSignal);
                     } catch (IOException e) {
-                        LOGGER.error(e);
+                        LOGGER.error(e.getMessage(), e);
                     }
                 });
             }
@@ -69,7 +69,7 @@ public class WebnovelScraperServiceOrchestrator {
                         try {
                             processSingle(volumeUrl);
                         } catch (IOException | URISyntaxException e) {
-                            LOGGER.error(e);
+                            LOGGER.error(e.getMessage(), e);
                         }
                     });
                 }
@@ -78,7 +78,7 @@ public class WebnovelScraperServiceOrchestrator {
                 LOGGER.info("Unexpected host: {}", urlHost);
             }
         } catch (URISyntaxException e) {
-            LOGGER.error(e);
+            LOGGER.error(e.getMessage(), e);
         }
 
         doneSignal.countDown();

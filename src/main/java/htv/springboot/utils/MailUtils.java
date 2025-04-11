@@ -41,6 +41,10 @@ public class MailUtils {
         return getMails(emailAddress, appPassword, new FlagTerm(new Flags(Flags.Flag.SEEN), false));
     }
 
+    public static String getPlainEmailContent(Part p) throws MessagingException, IOException {
+        return htv.springboot.utils.StringUtils.getPlainText(getEmailContent(p));
+    }
+
     //copied from https://javaee.github.io/javamail/FAQ#mainbody
     public static String getEmailContent(Part p) throws MessagingException, IOException {
         LOGGER.trace("Getting email content");

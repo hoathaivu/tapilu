@@ -70,7 +70,7 @@ public class JobService {
                     LOGGER.trace("Job already processed");
                 }
             } catch (Exception e) {
-                LOGGER.error(e);
+                LOGGER.error(e.getMessage(), e);
             }
         }
         LOGGER.info("Finished scheduleScraping");
@@ -135,7 +135,7 @@ public class JobService {
     private static final String[] NORM_EMAIL_BUTTON_OPTIONS = new String[] {"Skip", "Delete"};
     private static final String[] AD_EMAIL_BUTTON_OPTIONS = new String[] {"Skip", "Delete", "Unsubscribe and Delete"};
 
-    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.HOURS)
+    @Scheduled(fixedDelay = 5, timeUnit = TimeUnit.MINUTES)
     public void scheduleEmailCheck() throws MessagingException, IOException {
         LOGGER.info("Start scheduleEmailCheck");
         /**
@@ -151,7 +151,7 @@ public class JobService {
                     Arrays.stream(email.getFrom()).map(Address::toString).collect(Collectors.joining(",")),
                     Arrays.stream(email.getAllRecipients()).map(Address::toString).collect(Collectors.joining(",")),
                     email.getSubject(),
-                    MailUtils.getEmailContent(email));
+                    MailUtils.getPlainEmailContent(email));
 
             String[] buttons = NORM_EMAIL_BUTTON_OPTIONS;
             Enumeration<Header> enumeration = email.getAllHeaders();

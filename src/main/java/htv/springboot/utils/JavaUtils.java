@@ -13,6 +13,7 @@ public class JavaUtils {
     public static int createOptionWindow(String title, String msg, String[] options, int defaultOptionIndex) {
         JTextArea jta = new JTextArea(msg);
         jta.setLineWrap(true);
+        jta.setEditable(false);
         JScrollPane jsp = new JScrollPane(jta);
         jsp.setPreferredSize(new Dimension(480, 320));
 
