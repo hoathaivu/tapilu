@@ -51,7 +51,7 @@ public class JobService {
     @Autowired
     private JobScraper jobScraper;
 
-    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.HOURS)
+    @Scheduled(fixedDelayString = "${htv.springboot.job.schedule-fixed-delay}", timeUnit = TimeUnit.HOURS)
     public void scheduleScraping() throws Exception {
         LOGGER.info("Start scheduleScraping");
         for (Job job : jobScraper.retrieveJobs()) {
@@ -124,16 +124,14 @@ public class JobService {
         databaseService.createNewJobStatistics(new JobStats(job, maxCoL));
     }
 
-    public static final String YAHOOMAIL_EMAIL_ENV_NAME = "YAHOOMAIL_EMAIL";
-    public static final String YAHOOMAIL_PASSWORD_ENV_NAME = "YAHOOMAIL_APPLICATION_PASSWORD";
-
     private static final int EMAIL_SKIP_OPTION = 0;
     private static final int EMAIL_DELETE_OPTION = 1;
     private static final int EMAIL_UNSUBSCRIBE_DELETE_OPTION = 2;
     private static final String[] NORM_EMAIL_BUTTON_OPTIONS = new String[] {"Skip", "Delete"};
     private static final String[] AD_EMAIL_BUTTON_OPTIONS = new String[] {"Skip", "Delete", "Unsubscribe and Delete"};
 
-    public static void processNewEmails(Message[] newEmails, RestClient restClient)
+    public static void processNewEmails(
+            String emailAddress, String emailAppPassword, Message[] newEmails, RestClient restClient)
             throws MessagingException, IOException {
         LOGGER.info("Start processNewEmails");
         /**
@@ -173,8 +171,6 @@ public class JobService {
             }
         }
 
-        String emailAddress = System.getenv(YAHOOMAIL_EMAIL_ENV_NAME);
-        String emailAppPassword = System.getenv(YAHOOMAIL_PASSWORD_ENV_NAME);
         MailUtils.deleteFlaggedEmails(emailAddress, emailAppPassword, Flags.Flag.USER);
 
         LOGGER.info("Finished processNewEmails");

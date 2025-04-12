@@ -1,3 +1,5 @@
+CREATE KEYSPACE IF NOT EXISTS spring_cassandra WITH durable_writes = true AND replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
+
 DROP TABLE IF EXISTS spring_cassandra.jobs;
 DROP TABLE IF EXISTS spring_cassandra.jobs_details;
 DROP TABLE IF EXISTS spring_cassandra.jobs_applied;

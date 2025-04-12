@@ -138,12 +138,12 @@ public class MailUtils {
         IMAPFolder folder = (IMAPFolder) store.getFolder("INBOX");
         folder.open(Folder.READ_WRITE);
 
-        JobService.processNewEmails(folder.getMessages(), restClient);
+        JobService.processNewEmails(emailAddress, appPassword, folder.getMessages(), restClient);
 
         folder.addMessageCountListener(new MessageCountAdapter() {
             public void messagesAdded(MessageCountEvent ev) {
                 try {
-                    JobService.processNewEmails(ev.getMessages(), restClient);
+                    JobService.processNewEmails(emailAddress, appPassword, ev.getMessages(), restClient);
                 } catch (MessagingException | IOException e) {
                     LOGGER.error("Error processing new emails", e);
                 }
@@ -152,6 +152,14 @@ public class MailUtils {
 
         folder.addConnectionListener(new ConnectionAdapter() {
             public void closed(ConnectionEvent ce) {
+                reconnect();
+            }
+
+            public void disconnected(ConnectionEvent e) {
+                reconnect();
+            }
+
+            private void reconnect() {
                 try {
                     LOGGER.info("Connection closed. Reconnecting to server.");
 
