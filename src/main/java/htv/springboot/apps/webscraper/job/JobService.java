@@ -51,9 +51,6 @@ public class JobService {
     @Autowired
     private JobScraper jobScraper;
 
-    @Autowired
-    private RestClient restClient;
-
     @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.HOURS)
     public void scheduleScraping() throws Exception {
         LOGGER.info("Start scheduleScraping");
@@ -127,26 +124,25 @@ public class JobService {
         databaseService.createNewJobStatistics(new JobStats(job, maxCoL));
     }
 
-    private static final String YAHOOMAIL_EMAIL_ENV_NAME = "YAHOOMAIL_EMAIL";
-    private static final String YAHOOMAIL_PASSWORD_ENV_NAME = "YAHOOMAIL_APPLICATION_PASSWORD";
+    public static final String YAHOOMAIL_EMAIL_ENV_NAME = "YAHOOMAIL_EMAIL";
+    public static final String YAHOOMAIL_PASSWORD_ENV_NAME = "YAHOOMAIL_APPLICATION_PASSWORD";
+
     private static final int EMAIL_SKIP_OPTION = 0;
     private static final int EMAIL_DELETE_OPTION = 1;
     private static final int EMAIL_UNSUBSCRIBE_DELETE_OPTION = 2;
     private static final String[] NORM_EMAIL_BUTTON_OPTIONS = new String[] {"Skip", "Delete"};
     private static final String[] AD_EMAIL_BUTTON_OPTIONS = new String[] {"Skip", "Delete", "Unsubscribe and Delete"};
 
-    @Scheduled(fixedDelay = 5, timeUnit = TimeUnit.MINUTES)
-    public void scheduleEmailCheck() throws MessagingException, IOException {
-        LOGGER.info("Start scheduleEmailCheck");
+    public static void processNewEmails(Message[] newEmails, RestClient restClient)
+            throws MessagingException, IOException {
+        LOGGER.info("Start processNewEmails");
         /**
          * 1. When receive job email, check email's content for info
          * 	a. If new jobAppliedStatus, update jobs_applied. If not rejected, go to step #2
          * 	b. If no news, ignore
          * 2. Send notification of the news, together with job's full information
          */
-        String emailAddress = System.getenv(YAHOOMAIL_EMAIL_ENV_NAME);
-        String emailAppPassword = System.getenv(YAHOOMAIL_PASSWORD_ENV_NAME);
-        for (Message email : MailUtils.getUnreadMails(emailAddress, emailAppPassword)) {
+        for (Message email : newEmails) {
             String msg = String.format("From: %s\nTo: %s\nSubject: %s\nContent:\n%s",
                     Arrays.stream(email.getFrom()).map(Address::toString).collect(Collectors.joining(",")),
                     Arrays.stream(email.getAllRecipients()).map(Address::toString).collect(Collectors.joining(",")),
@@ -177,8 +173,10 @@ public class JobService {
             }
         }
 
+        String emailAddress = System.getenv(YAHOOMAIL_EMAIL_ENV_NAME);
+        String emailAppPassword = System.getenv(YAHOOMAIL_PASSWORD_ENV_NAME);
         MailUtils.deleteFlaggedEmails(emailAddress, emailAppPassword, Flags.Flag.USER);
 
-        LOGGER.info("Finished scheduleEmailCheck");
+        LOGGER.info("Finished processNewEmails");
     }
 }
