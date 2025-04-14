@@ -1,11 +1,8 @@
 package htv.springboot.utils;
 
-import com.sun.mail.imap.IMAPFolder;
-import htv.springboot.apps.webscraper.job.JobService;
 import jakarta.mail.Address;
 import jakarta.mail.Flags;
 import jakarta.mail.Folder;
-import jakarta.mail.FolderClosedException;
 import jakarta.mail.Header;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
@@ -13,14 +10,11 @@ import jakarta.mail.Multipart;
 import jakarta.mail.Part;
 import jakarta.mail.Session;
 import jakarta.mail.Store;
-import jakarta.mail.event.ConnectionAdapter;
-import jakarta.mail.event.ConnectionEvent;
-import jakarta.mail.event.MessageCountAdapter;
-import jakarta.mail.event.MessageCountEvent;
 import jakarta.mail.search.FlagTerm;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eclipse.angus.mail.imap.IMAPFolder;
 import org.springframework.web.client.RestClient;
 
 import java.io.IOException;
@@ -30,17 +24,8 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 public class MailUtils {
-    public static final String UNSUBSCRIBE_HEADER = "List-Unsubscribe";
-    public static final String UNSUBSCRIBE_POST_HEADER = "List-Unsubscribe-Post";
 
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final String IMAPS = "imaps";
-    private static final String GMAIL_IMAPS = "imap.gmail.com";
-    private static final String GMAIL_SUFFIX = "@gmail.com";
-    private static final String YAHOO_IMAPS = "imap.mail.yahoo.com";
-    private static final String YAHOO_SUFFIX = "@yahoo.com";
-    private static final String OUTLOOK_IMAPS = "imap-mail.outlook.com";
-    private static final String OUTLOOK_SUFFIX = "@outlook.com";
 
     public static String getPlainEmailContent(Part p) throws MessagingException, IOException {
         return htv.springboot.utils.StringUtils.getPlainText(getEmailContent(p));
@@ -84,9 +69,13 @@ public class MailUtils {
         return null;
     }
 
+    /**
+     * Instead of using DELETED flag, which will completely remove the email, we will simply move it to the Trash folder.
+     * User can have the option to revert the deletion if needed.
+     */
     public static void deleteFlaggedEmails(
             String emailAddress, String appPassword, Flags.Flag flag) throws MessagingException {
-        LOGGER.trace("Deleting emails with flag {} of {}", flag.hashCode(), emailAddress);
+        LOGGER.trace("Deleting emails with flag {} of {}", flag.toString(), emailAddress);
         Store store = Session.getDefaultInstance(new Properties()).getStore(IMAPS);
         store.connect(getImaps(emailAddress), emailAddress, appPassword);
 
@@ -99,6 +88,9 @@ public class MailUtils {
         inbox.close(true);
         store.close();
     }
+
+    public static final String UNSUBSCRIBE_HEADER = "List-Unsubscribe";
+    public static final String UNSUBSCRIBE_POST_HEADER = "List-Unsubscribe-Post";
 
     public static void unsubscribeFromEmail(Message email, RestClient restClient) throws MessagingException {
         LOGGER.trace("Attempting to unsubscribe from {}",
@@ -125,62 +117,21 @@ public class MailUtils {
                 spec.header(headerParts[0], headerParts[1]);
             }
 
-            spec.body(String.class);
+            spec.retrieve();
         } else {
             LOGGER.trace("No unsubscribe header found in email's header");
         }
     }
 
-    public static void setupIdle(String emailAddress, String appPassword, RestClient restClient)
-            throws MessagingException, IOException {
-        Store store = Session.getDefaultInstance(new Properties()).getStore(IMAPS);
-        store.connect(getImaps(emailAddress), emailAddress, appPassword);
-        IMAPFolder folder = (IMAPFolder) store.getFolder("INBOX");
-        folder.open(Folder.READ_WRITE);
+    private static final String IMAPS = "imaps";
+    private static final String GMAIL_IMAPS = "imap.gmail.com";
+    private static final String GMAIL_SUFFIX = "@gmail.com";
+    private static final String YAHOO_IMAPS = "imap.mail.yahoo.com";
+    private static final String YAHOO_SUFFIX = "@yahoo.com";
+    private static final String OUTLOOK_IMAPS = "imap-mail.outlook.com";
+    private static final String OUTLOOK_SUFFIX = "@outlook.com";
 
-        JobService.processNewEmails(emailAddress, appPassword, folder.getMessages(), restClient);
-
-        folder.addMessageCountListener(new MessageCountAdapter() {
-            public void messagesAdded(MessageCountEvent ev) {
-                try {
-                    JobService.processNewEmails(emailAddress, appPassword, ev.getMessages(), restClient);
-                } catch (MessagingException | IOException e) {
-                    LOGGER.error("Error processing new emails", e);
-                }
-            }
-        });
-
-        folder.addConnectionListener(new ConnectionAdapter() {
-            public void closed(ConnectionEvent ce) {
-                reconnect();
-            }
-
-            public void disconnected(ConnectionEvent e) {
-                reconnect();
-            }
-
-            private void reconnect() {
-                try {
-                    LOGGER.info("Connection closed. Reconnecting to server.");
-
-                    setupIdle(emailAddress, appPassword, restClient);
-                } catch (Exception e) {
-                    LOGGER.error("Could not connect to server", e);
-                }
-            }
-        });
-
-        try {
-            //noinspection InfiniteLoopStatement
-            while (true) {
-                folder.idle();
-            }
-        } catch (FolderClosedException e) {
-            LOGGER.error("Folder closed. Should be restarted soon.", e);
-        }
-    }
-
-    private static String getImaps(String emailAddress) {
+    public static String getImaps(String emailAddress) {
         if (emailAddress.endsWith(GMAIL_SUFFIX)) {
             return GMAIL_IMAPS;
         } else if (emailAddress.endsWith(YAHOO_SUFFIX)) {
@@ -190,5 +141,10 @@ public class MailUtils {
         } else {
             throw new RuntimeException("Unknown email: " + emailAddress);
         }
+    }
+
+    public static String getImapUrl(String emailAddress, String emailAppPassword) {
+        String username = emailAddress.substring(0, emailAddress.indexOf('@'));
+        return "imaps://" + username + ":" + emailAppPassword + "@" + getImaps(emailAddress) + "/INBOX";
     }
 }

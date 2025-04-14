@@ -47,4 +47,14 @@ public class JobDetail {
         JsonObject jobInformation = jsonObject.getAsJsonObject("job_information");
         jobDescription = jobInformation.get("description").getAsString();
     }
+
+    public String toShortString() {
+        return String.format(
+                "type: %s\nlocation: %s\nwork location: %s\ncomp min: %s\ncomp max: %s",
+                getJobType(),
+                getJobLocation(),
+                getJobLocationType(),
+                getCompensationMin() == null ? "" : getCompensationMin(),
+                getCompensationMax() == null ? "" : getCompensationMax());
+    }
 }

@@ -3,12 +3,13 @@ package htv.springboot.apps.webscraper.job;
 import htv.springboot.utils.MailUtils;
 import jakarta.mail.Address;
 import jakarta.mail.Flags;
-import jakarta.mail.Header;
-import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.messaging.Message;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import htv.springboot.apps.webscraper.job.db.JobDatabaseService;
@@ -24,7 +25,6 @@ import org.springframework.web.client.RestClient;
 import javax.swing.JOptionPane;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -35,9 +35,6 @@ import static htv.springboot.utils.MailUtils.UNSUBSCRIBE_HEADER;
 public class JobService {
 
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final int SKIP_OPTION = 0;
-    private static final int PROCEED_OPTION = 1;
-    private static final String[] BUTTON_OPTIONS = new String[] {"Skip", "Proceed"};
 
     @Autowired
     private Browser browser;
@@ -50,6 +47,10 @@ public class JobService {
 
     @Autowired
     private JobScraper jobScraper;
+
+    private static final int SKIP_OPTION = 0;
+    private static final int PROCEED_OPTION = 1;
+    private static final String[] BUTTON_OPTIONS = new String[] {"Skip", "Proceed"};
 
     @Scheduled(fixedDelayString = "${htv.springboot.job.schedule-fixed-delay}", timeUnit = TimeUnit.HOURS)
     public void scheduleScraping() throws Exception {
@@ -83,19 +84,7 @@ public class JobService {
         //create new record in jobs_statistics
         createNewJobStatistics(job);
 
-        String msg = String.format(
-                "company: %s\npostedDate: %s\ntitle: %s\nurl: %s\ntype: %s\nlocation: %s\nwork location: %s\ncomp min: %s\ncomp max: %s",
-                job.getCompanyId(),
-                job.getPostedDatetime().toLocalDateTime(),
-                job.getJobTitle(),
-                job.getJobUrl(),
-                job.getJobDetail().getJobType(),
-                job.getJobDetail().getJobLocation(),
-                job.getJobDetail().getJobLocationType(),
-                job.getJobDetail().getCompensationMin() == null ? "" : job.getJobDetail().getCompensationMin(),
-                job.getJobDetail().getCompensationMax() == null ? "" : job.getJobDetail().getCompensationMax());
-
-        int selected = JavaUtils.createOptionWindow("New Job", msg, BUTTON_OPTIONS, 1);
+        int selected = JavaUtils.createOptionWindow("New Job", job.toString(), BUTTON_OPTIONS, 1);
         switch (selected) {
             case JOptionPane.CLOSED_OPTION:
                 LOGGER.trace("Closed option clicked");
@@ -130,9 +119,16 @@ public class JobService {
     private static final String[] NORM_EMAIL_BUTTON_OPTIONS = new String[] {"Skip", "Delete"};
     private static final String[] AD_EMAIL_BUTTON_OPTIONS = new String[] {"Skip", "Delete", "Unsubscribe and Delete"};
 
-    public static void processNewEmails(
-            String emailAddress, String emailAppPassword, Message[] newEmails, RestClient restClient)
-            throws MessagingException, IOException {
+    @Value("${htv.springboot.job.email-address}")
+    private String emailAddress;
+
+    @Value("${htv.springboot.job.email-app-pass}")
+    private String emailAppPassword;
+
+    @Autowired
+    private RestClient restClient;
+
+    public void processNewEmail(Message<MimeMessage> mimeMsg) throws MessagingException, IOException {
         LOGGER.info("Start processNewEmails");
         /**
          * 1. When receive job email, check email's content for info
@@ -140,38 +136,37 @@ public class JobService {
          * 	b. If no news, ignore
          * 2. Send notification of the news, together with job's full information
          */
-        for (Message email : newEmails) {
-            String msg = String.format("From: %s\nTo: %s\nSubject: %s\nContent:\n%s",
-                    Arrays.stream(email.getFrom()).map(Address::toString).collect(Collectors.joining(",")),
-                    Arrays.stream(email.getAllRecipients()).map(Address::toString).collect(Collectors.joining(",")),
-                    email.getSubject(),
-                    MailUtils.getPlainEmailContent(email));
+        MimeMessage email = mimeMsg.getPayload();
+        String msg = String.format("From: %s\nTo: %s\nSubject: %s\nContent:\n%s",
+                Arrays.stream(email.getFrom()).map(Address::toString).collect(Collectors.joining(",")),
+                Arrays.stream(email.getAllRecipients()).map(Address::toString).collect(Collectors.joining(",")),
+                email.getSubject(),
+                MailUtils.getPlainEmailContent(email));
 
-            String[] buttons = NORM_EMAIL_BUTTON_OPTIONS;
-            Enumeration<Header> enumeration = email.getAllHeaders();
-            while (enumeration.hasMoreElements()) {
-                Header header = enumeration.nextElement();
-                if (UNSUBSCRIBE_HEADER.equals(header.getName())) {
-                    buttons = AD_EMAIL_BUTTON_OPTIONS;
-                    break;
-                }
-            }
-
-            int selected = JavaUtils.createOptionWindow("New email", msg, buttons, 0);
-            switch (selected) {
-                case EMAIL_DELETE_OPTION:
-                    email.setFlag(Flags.Flag.USER, true);
-                    break;
-                case EMAIL_UNSUBSCRIBE_DELETE_OPTION:
-                    email.setFlag(Flags.Flag.USER, true);
-                    MailUtils.unsubscribeFromEmail(email, restClient);
-                    break;
-                case EMAIL_SKIP_OPTION:
-                default:
-            }
+        String[] buttons = NORM_EMAIL_BUTTON_OPTIONS;
+        if (email.getHeader(UNSUBSCRIBE_HEADER) != null) {
+            buttons = AD_EMAIL_BUTTON_OPTIONS;
         }
 
-        MailUtils.deleteFlaggedEmails(emailAddress, emailAppPassword, Flags.Flag.USER);
+        boolean deletionInitiated = false;
+        int selected = JavaUtils.createOptionWindow("New email", msg, buttons, 0);
+        switch (selected) {
+            case EMAIL_DELETE_OPTION:
+                email.setFlag(Flags.Flag.USER, true);
+                deletionInitiated = true;
+                break;
+            case EMAIL_UNSUBSCRIBE_DELETE_OPTION:
+                MailUtils.unsubscribeFromEmail(email, restClient);
+                email.setFlag(Flags.Flag.USER, true);
+                deletionInitiated = true;
+                break;
+            case EMAIL_SKIP_OPTION:
+            default:
+        }
+
+        if (deletionInitiated) {
+            MailUtils.deleteFlaggedEmails(emailAddress, emailAppPassword, Flags.Flag.USER);
+        }
 
         LOGGER.info("Finished processNewEmails");
     }

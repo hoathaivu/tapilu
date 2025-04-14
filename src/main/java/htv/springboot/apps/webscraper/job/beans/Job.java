@@ -39,4 +39,17 @@ public class Job {
 
         jobDetail = new JobDetail(jobId, jsonObject);
     }
+
+    @Override
+    public String toString() {
+        return String.format(
+                "id: %s\ncompany: %s\npostedDate: %s\ntitle: %s\nurl: %s",
+                getJobId(),
+                getCompanyId(),
+                getPostedDatetime().toLocalDateTime(),
+                getJobTitle(),
+                getJobUrl())
+                + "\n"
+                + getJobDetail().toShortString();
+    }
 }

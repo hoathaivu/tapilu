@@ -3,12 +3,13 @@
 Tasks:
 - Use a JS framework for notification windows
 - LLM to detect an email is for reject/accept/etc
+- LLM to map email to job
 - dependency conflicts
 - Docker?
 - Kafka for msg to display?
 
 Features:
-- Every 1 hour (configurabled in `application.properties`), scrape based on implementation of `JobScraper` interface and display the scraped jobs. User can then do one of the following:
+- Every 1 hour (configurable in `application.properties`), scrape based on implementation of `JobScraper` interface and display the scraped jobs. User can then do one of the following:
   - Skip (i.e. do nothing)
   - Proceed, in which case the job's URL will be opened in Firefox browser
   - Regardless of what is selected, the job will not reappear in subsequent runs
@@ -27,3 +28,16 @@ WSL:
 
 CQL:
 - SOURCE 'tables.cql'
+
+
+Past issues
+- `com.sun.mail:jakarta.mail` vs `org.springframework.integration:spring-integration-mail`
+  - `com.sun.mail:jakarta.mail`:
+    - Straightforward to use
+    - Easy to set low-level config/command
+    - Can either call `Folder`'s `idle()` directly, or use `IdleManager`
+    - In either cases, require manual monitor for IDLE in case connection timeout or server drops the connection
+  - `org.springframework.integration:spring-integration-mail`:
+    - Part of Spring Integration, so need to learn about [DSL](https://docs.spring.io/spring-integration/reference/dsl.html)
+    - JavaMail API is hidden behind an overhead layer, so low-level action may be hard/impossible to do
+    - IDLE is handled based on set of properties (e.g. `simpleContent`, `autoCloseFolder`)
