@@ -5,7 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.jsoup.nodes.Document;
-import htv.springboot.apps.webscraper.ScrapperService;
+import htv.springboot.apps.webscraper.BaseScrapper;
 
 import java.io.*;
 
@@ -14,14 +14,14 @@ import static htv.springboot.utils.StringUtils.windowsFileName;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 @Getter
-public abstract class WebnovelScraperService extends ScrapperService {
+public abstract class WebnovelBaseScraper extends BaseScrapper {
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final String DEST_DIRECTORY = "C:/Users/hthvu/Documents/MEGA Downloads";
 
     protected String hostName;
 
-    public WebnovelScraperService(String hostName) {
+    public WebnovelBaseScraper(String hostName) {
         this.hostName = hostName;
     }
 

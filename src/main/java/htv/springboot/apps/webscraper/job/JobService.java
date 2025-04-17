@@ -25,6 +25,7 @@ import org.springframework.web.client.RestClient;
 import javax.swing.JOptionPane;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -46,7 +47,7 @@ public class JobService {
     private JobDatabaseService databaseService;
 
     @Autowired
-    private JobScraper jobScraper;
+    private List<JobScraper> jobScrapers;
 
     private static final int SKIP_OPTION = 0;
     private static final int PROCEED_OPTION = 1;
@@ -55,22 +56,29 @@ public class JobService {
     @Scheduled(fixedDelayString = "${htv.springboot.job.schedule-fixed-delay}", timeUnit = TimeUnit.HOURS)
     public void scheduleScraping() throws Exception {
         LOGGER.info("Start scheduleScraping");
-        for (Job job : jobScraper.retrieveJobs()) {
-            try {
-                LOGGER.trace("Processing job {}", job.getJobId());
-                if (!databaseService.isSeenJob(job)) {
-                    LOGGER.trace("New job");
-                    processNewJob(job);
-                } else if (databaseService.isBeforeDays(job, 1)) {
-                    LOGGER.trace("Job reappeared");
-                    databaseService.updateJobStatsEncounter(job);
-                } else {
-                    LOGGER.trace("Job already processed");
+
+        for (JobScraper jobScraper : jobScrapers) {
+            List<Job> scrapedJobs = jobScraper.retrieveJobs();
+
+            LOGGER.info("Scraped {} jobs from {}", scrapedJobs.size(), jobScraper.getJobSiteName());
+            for (Job job : scrapedJobs) {
+                try {
+                    LOGGER.trace("Processing job {}", job.getJobId());
+                    if (!databaseService.isSeenJob(job)) {
+                        LOGGER.trace("New job");
+                        processNewJob(job);
+                    } else if (databaseService.isBeforeDays(job, 1)) {
+                        LOGGER.trace("Job reappeared");
+                        databaseService.updateJobStatsEncounter(job);
+                    } else {
+                        LOGGER.trace("Job already processed");
+                    }
+                } catch (Exception e) {
+                    LOGGER.error(e.getMessage(), e);
                 }
-            } catch (Exception e) {
-                LOGGER.error(e.getMessage(), e);
             }
         }
+
         LOGGER.info("Finished scheduleScraping");
     }
 

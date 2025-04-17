@@ -43,7 +43,8 @@ public class CostOfLivingConfiguration {
     public Map<String, Map<String, String>> cityCountyMap()
             throws IOException, URISyntaxException, NoSuchMethodException {
         Map<String, Map<String, String>> cityCountyMap = new HashMap<>();
-        for (CityCountyExcelBean bean : readExcelData("webscraper/hiringcafe/citytocounty.xls", CityCountyExcelBean.class)) {
+        for (CityCountyExcelBean bean : readExcelData(
+                "webscraper/job/hiringcafe/citytocounty.xls", CityCountyExcelBean.class)) {
             if (!cityCountyMap.containsKey(bean.getStateCode())) {
                 cityCountyMap.put(bean.getStateCode(), new HashMap<>());
             }
@@ -60,7 +61,7 @@ public class CostOfLivingConfiguration {
     public Map<String, Map<String, CoLExcelBean>> countyCoLMap()
             throws IOException, URISyntaxException, NoSuchMethodException {
         Map<String, Map<String, CoLExcelBean>> colMap = new HashMap<>();
-        for (CoLExcelBean bean : readExcelData("webscraper/hiringcafe/col_2025.xlsx", CoLExcelBean.class)) {
+        for (CoLExcelBean bean : readExcelData("webscraper/job/hiringcafe/col_2025.xlsx", CoLExcelBean.class)) {
             if (!colMap.containsKey(bean.getStateCode())) {
                 colMap.put(bean.getStateCode(), new HashMap<>());
             }

@@ -17,17 +17,17 @@ import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 @Service
-public class WebnovelScraperServiceOrchestrator {
+public class WebnovelScrapersOrchestrator {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private final Map<String, WebnovelScraperService> scrapers;
+    private final Map<String, WebnovelBaseScraper> scrapers;
 
     @Autowired
-    public WebnovelScraperServiceOrchestrator(List<? extends WebnovelScraperService> scrapersList) {
+    public WebnovelScrapersOrchestrator(List<? extends WebnovelBaseScraper> scrapersList) {
         scrapers = scrapersList
                 .stream()
-                .collect(toMap(WebnovelScraperService::getHostName, identity()));
+                .collect(toMap(WebnovelBaseScraper::getHostName, identity()));
     }
 
     public void processMultiple(String[] urls) throws InterruptedException {

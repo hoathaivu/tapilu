@@ -15,7 +15,7 @@ import org.springframework.web.client.RestClient;
 import java.io.IOException;
 
 @Service
-public abstract class ScrapperService {
+public abstract class BaseScrapper {
 
     private static final Logger LOGGER = LogManager.getLogger();
 

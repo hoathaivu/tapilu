@@ -1,6 +1,5 @@
 package htv.springboot.apps.webscraper.job.beans;
 
-import com.google.gson.JsonObject;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -21,29 +20,15 @@ public class Job {
     private OffsetDateTime postedDatetime;
     private String jobTitle;
     private String jobUrl;
+    private String source;
     @Transient
     private JobDetail jobDetail;
-
-    public Job(JsonObject jsonObject) {
-        jobId = jsonObject.get("id").getAsString();
-        jobUrl = jsonObject.get("apply_url").getAsString();
-
-        JsonObject processedJob = jsonObject.getAsJsonObject("v5_processed_job_data");
-        companyId = processedJob.has("company_name") && !processedJob.get("company_name").isJsonNull() ?
-                processedJob.get("company_name").getAsString()
-                : processedJob.get("company_website").getAsString();
-        postedDatetime = OffsetDateTime.parse(processedJob.get("estimated_publish_date").getAsString());
-
-        JsonObject jobInformation = jsonObject.getAsJsonObject("job_information");
-        jobTitle = jobInformation.get("title").getAsString();
-
-        jobDetail = new JobDetail(jobId, jsonObject);
-    }
 
     @Override
     public String toString() {
         return String.format(
-                "id: %s\ncompany: %s\npostedDate: %s\ntitle: %s\nurl: %s",
+                "source: %s\nid: %s\ncompany: %s\npostedDate: %s\ntitle: %s\nurl: %s",
+                getSource(),
                 getJobId(),
                 getCompanyId(),
                 getPostedDatetime().toLocalDateTime(),

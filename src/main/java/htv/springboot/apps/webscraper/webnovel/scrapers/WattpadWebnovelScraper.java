@@ -4,17 +4,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.springframework.stereotype.Service;
-import htv.springboot.apps.webscraper.webnovel.WebnovelScraperService;
+import org.springframework.stereotype.Component;
+import htv.springboot.apps.webscraper.webnovel.WebnovelBaseScraper;
 
-@Service
-public class WattpadWebnovelScraperService extends WebnovelScraperService {
+@Component
+public class WattpadWebnovelScraper extends WebnovelBaseScraper {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
     public static final String HOST_NAME = "www.wattpad.com";
 
-    public WattpadWebnovelScraperService() {
+    public WattpadWebnovelScraper() {
         super(HOST_NAME);
     }
 

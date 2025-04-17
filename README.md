@@ -2,8 +2,10 @@
 
 Tasks:
 - Use a JS framework for notification windows
-- LLM to detect an email is for reject/accept/etc
-- LLM to map email to job
+- LLM:
+  - to detect an email is for reject/accept/etc
+  - to map email to job
+  - https://github.com/deepseek-ai/DeepSeek-V3?
 - dependency conflicts
 - Docker?
 - Kafka for msg to display?

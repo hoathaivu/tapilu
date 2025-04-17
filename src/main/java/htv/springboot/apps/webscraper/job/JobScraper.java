@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface JobScraper {
     List<Job> retrieveJobs() throws Exception;
+    String getJobSiteName();
 }
