@@ -42,7 +42,7 @@ bin/
 .DS_Store
 
 ### Personal ###
-Dt14WebnovelScraperService*
-LmvnWebnovelScraperService*
-Tstv2WebnovelScraperService*
+Dt14WebnovelScraper*
+LmvnWebnovelScraper*
+Tstv2WebnovelScraper*
 *Main.java

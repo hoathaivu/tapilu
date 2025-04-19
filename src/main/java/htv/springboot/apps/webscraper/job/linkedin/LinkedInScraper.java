@@ -5,8 +5,8 @@ import htv.springboot.apps.webscraper.job.JobScraper;
 import htv.springboot.apps.webscraper.job.beans.Job;
 import htv.springboot.apps.webscraper.job.beans.JobDetail;
 import htv.springboot.apps.webscraper.job.enums.JobType;
-import htv.springboot.constants.TimeConstant;
 import htv.springboot.utils.StringUtils;
+import htv.springboot.utils.TimeUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.helper.ValidationException;
@@ -21,20 +21,25 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static htv.springboot.utils.TimeUtils.SHORTHAND_CHRONO_UNIT_MAP;
+
 @Component
 public class LinkedInScraper extends BaseScrapper implements JobScraper {
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final String BASE_HOSTNAME = "https://www.linkedin.com";
-    //info on URL: https://gist.github.com/Diegiwg/51c22fa7ec9d92ed9b5d1f537b9e1107
+    //info about LinkedIn's guest urls: https://gist.github.com/Diegiwg/51c22fa7ec9d92ed9b5d1f537b9e1107
     private static final String JOBS_REQUEST_URL = BASE_HOSTNAME
             + "/jobs-guest/jobs/api/seeMoreJobPostings/search?"
             + "f_E=3&f_JT=F,C&f_T=9&f_TPR=r3600&keywords=software engineer&location=United States";
@@ -59,14 +64,7 @@ public class LinkedInScraper extends BaseScrapper implements JobScraper {
                 job.setCompanyId(element.expectFirst("[class*=base-search-card__subtitle]").text().trim());
                 job.setSource(getJobSiteName());
 
-                Element postedDateElement;
-                if ((postedDateElement = element.selectFirst("time[class*=job-search-card__listdate]")) != null) {
-                    job.setPostedDatetime(LocalDate
-                            .parse(postedDateElement.attr("datetime"), DateTimeFormatter.ISO_DATE)
-                            .atStartOfDay()
-                            .atOffset(ZoneId.systemDefault().getRules().getOffset(Instant.now())));
-                }
-
+                parsetJobPostedDate(job, element);
                 parseJobDetail(job, element);
 
                 jobList.add(job);
@@ -76,6 +74,31 @@ public class LinkedInScraper extends BaseScrapper implements JobScraper {
         }
 
         return jobList;
+    }
+
+    private void parsetJobPostedDate(Job job, Element jobElement) {
+        Element postedDateElement;
+        if ((postedDateElement = jobElement.selectFirst("time[class*=job-search-card__listdate]")) != null) {
+            LocalDate postedDate = LocalDate
+                    .parse(postedDateElement.attr("datetime"), DateTimeFormatter.ISO_DATE);
+
+            OffsetDateTime postedOffsetDate = postedDate
+                    .atStartOfDay()
+                    .atOffset(ZoneId.systemDefault().getRules().getOffset(Instant.now()));
+
+            if (postedDate.isEqual(LocalDate.now())) {
+                String[] timeComponents = postedDateElement.text().split(" +");
+
+                if (timeComponents.length == 3 && SHORTHAND_CHRONO_UNIT_MAP.containsKey(timeComponents[1])) {
+                    postedOffsetDate = LocalDateTime
+                            .now()
+                            .minus(Long.parseLong(timeComponents[0]), SHORTHAND_CHRONO_UNIT_MAP.get(timeComponents[1]))
+                            .atOffset(ZoneId.systemDefault().getRules().getOffset(Instant.now()));
+                }
+            }
+
+            job.setPostedDatetime(postedOffsetDate);
+        }
     }
 
     private void parseJobDetail(Job job, Element jobElement) throws IOException, ParseException {
@@ -150,8 +173,10 @@ public class LinkedInScraper extends BaseScrapper implements JobScraper {
                 .doubleValue();
         if (slashPos != -1) {
             String timeShorthand = salaryComponent.substring(slashPos + 1).trim();
-            if (TimeConstant.SHORTHAND_MULT_MAP.containsKey(timeShorthand)) {
-                salary *= TimeConstant.SHORTHAND_MULT_MAP.get(timeShorthand);
+            try {
+                salary = TimeUtils.convert(salary, timeShorthand, ChronoUnit.YEARS);
+            } catch (UnsupportedOperationException e) {
+                LOGGER.trace("The shorthand {} is not supported", timeShorthand);
             }
         }
 
