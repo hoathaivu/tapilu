@@ -1,7 +1,7 @@
 package htv.springboot.apps.webscraper.job;
 
 import htv.springboot.utils.MailUtils;
-import jakarta.mail.Address;
+import htv.springboot.utils.StringUtils;
 import jakarta.mail.Flags;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -24,11 +24,9 @@ import org.springframework.web.client.RestClient;
 
 import javax.swing.JOptionPane;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static htv.springboot.utils.MailUtils.UNSUBSCRIBE_HEADER;
 
@@ -92,7 +90,7 @@ public class JobService {
         //create new record in jobs_statistics
         createNewJobStatistics(job);
 
-        int selected = JavaUtils.createOptionWindow("New Job", job.toString(), BUTTON_OPTIONS, 1);
+        int selected = JavaUtils.createOptionWindow("New Job", StringUtils.escape(job.toString()), BUTTON_OPTIONS);
         switch (selected) {
             case JOptionPane.CLOSED_OPTION:
                 LOGGER.trace("Closed option clicked");
@@ -145,35 +143,40 @@ public class JobService {
          * 2. Send notification of the news, together with job's full information
          */
         MimeMessage email = mimeMsg.getPayload();
-        String msg = String.format("From: %s\nTo: %s\nSubject: %s\nContent:\n%s",
-                Arrays.stream(email.getFrom()).map(Address::toString).collect(Collectors.joining(",")),
-                Arrays.stream(email.getAllRecipients()).map(Address::toString).collect(Collectors.joining(",")),
-                email.getSubject(),
-                MailUtils.getPlainEmailContent(email));
 
-        String[] buttons = NORM_EMAIL_BUTTON_OPTIONS;
-        if (email.getHeader(UNSUBSCRIBE_HEADER) != null) {
-            buttons = AD_EMAIL_BUTTON_OPTIONS;
-        }
+        String msg = String.format("From: %s\nTo: %s\nSubject: %s\nContent:\n",
+                StringUtils.toString(email.getFrom()),
+                StringUtils.toString(email.getAllRecipients()),
+                email.getSubject());
 
-        boolean deletionInitiated = false;
-        int selected = JavaUtils.createOptionWindow("New email", msg, buttons, 0);
-        switch (selected) {
-            case EMAIL_DELETE_OPTION:
-                email.setFlag(Flags.Flag.USER, true);
-                deletionInitiated = true;
-                break;
-            case EMAIL_UNSUBSCRIBE_DELETE_OPTION:
-                MailUtils.unsubscribeFromEmail(email, restClient);
-                email.setFlag(Flags.Flag.USER, true);
-                deletionInitiated = true;
-                break;
-            case EMAIL_SKIP_OPTION:
-            default:
-        }
+        msg = StringUtils.escape(msg) + MailUtils.getEmailContent(email);
 
-        if (deletionInitiated) {
-            MailUtils.deleteFlaggedEmails(emailAddress, emailAppPassword, Flags.Flag.USER);
+        String[] buttons = email.getHeader(UNSUBSCRIBE_HEADER) != null ?
+                AD_EMAIL_BUTTON_OPTIONS : NORM_EMAIL_BUTTON_OPTIONS;
+
+        try {
+            boolean deletionInitiated = false;
+            switch (JavaUtils.createOptionWindow("New email", msg, buttons)) {
+                case EMAIL_DELETE_OPTION:
+                    email.setFlag(Flags.Flag.USER, true);
+                    deletionInitiated = true;
+                    break;
+                case EMAIL_UNSUBSCRIBE_DELETE_OPTION:
+                    MailUtils.unsubscribeFromEmail(email, restClient);
+                    email.setFlag(Flags.Flag.USER, true);
+                    deletionInitiated = true;
+                    break;
+                case EMAIL_SKIP_OPTION:
+                default:
+            }
+
+            if (deletionInitiated) {
+                MailUtils.deleteFlaggedEmails(emailAddress, emailAppPassword, Flags.Flag.USER);
+            }
+        } catch (IllegalArgumentException e) {
+            LOGGER.error("Message too long: {}", msg.length(), e);
+        } catch (Exception e) {
+            LOGGER.error("Error displaying msg: {}", msg, e);
         }
 
         LOGGER.info("Finished processNewEmail");

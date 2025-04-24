@@ -1,18 +1,19 @@
 package htv.springboot.utils;
 
-import java.time.temporal.ChronoUnit;
+import htv.springboot.enums.ChronoWorkUnit;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static java.time.temporal.ChronoUnit.DAYS;
-import static java.time.temporal.ChronoUnit.HOURS;
-import static java.time.temporal.ChronoUnit.MINUTES;
-import static java.time.temporal.ChronoUnit.MONTHS;
-import static java.time.temporal.ChronoUnit.SECONDS;
-import static java.time.temporal.ChronoUnit.WEEKS;
-import static java.time.temporal.ChronoUnit.YEARS;
+import static htv.springboot.enums.ChronoWorkUnit.DAYS;
+import static htv.springboot.enums.ChronoWorkUnit.HOURS;
+import static htv.springboot.enums.ChronoWorkUnit.MINUTES;
+import static htv.springboot.enums.ChronoWorkUnit.MONTHS;
+import static htv.springboot.enums.ChronoWorkUnit.SECONDS;
+import static htv.springboot.enums.ChronoWorkUnit.WEEKS;
+import static htv.springboot.enums.ChronoWorkUnit.YEARS;
 
 public class TimeUtils {
     public static final Set<String> SECOND_SHORTHANDS = Set.of("s", "sec", "second", "seconds");
@@ -22,10 +23,10 @@ public class TimeUtils {
     public static final Set<String> WEEK_SHORTHANDS = Set.of("w", "wk", "week", "weeks");
     public static final Set<String> MONTH_SHORTHANDS = Set.of("mth", "month", "months");
     public static final Set<String> YEAR_SHORTHANDS = Set.of("y", "yr", "year", "years");
-    public static final Map<String, ChronoUnit> SHORTHAND_CHRONO_UNIT_MAP;
+    public static final Map<String, ChronoWorkUnit> SHORTHAND_CHRONO_UNIT_MAP;
 
     static {
-        Map<String, ChronoUnit> tempMap = new HashMap<>();
+        Map<String, ChronoWorkUnit> tempMap = new HashMap<>();
         SECOND_SHORTHANDS.forEach(shorthand -> tempMap.put(shorthand, SECONDS));
         MINUTE_SHORTHANDS.forEach(shorthand -> tempMap.put(shorthand, MINUTES));
         HOUR_SHORTHANDS.forEach(shorthand -> tempMap.put(shorthand, HOURS));
@@ -36,7 +37,7 @@ public class TimeUtils {
         SHORTHAND_CHRONO_UNIT_MAP = Collections.unmodifiableMap(tempMap);
     }
 
-    public static double convert(double fromValue, String fromUnitShorthand, ChronoUnit toUnit) {
+    public static double convert(double fromValue, String fromUnitShorthand, ChronoWorkUnit toUnit) {
         if (!SHORTHAND_CHRONO_UNIT_MAP.containsKey(fromUnitShorthand)) {
             throw new UnsupportedOperationException();
         }
@@ -44,7 +45,7 @@ public class TimeUtils {
         return convert(fromValue, SHORTHAND_CHRONO_UNIT_MAP.get(fromUnitShorthand), toUnit);
     }
 
-    public static double convert(double fromValue, ChronoUnit fromUnit, ChronoUnit toUnit) {
-        return fromValue * ((double) fromUnit.getDuration().toSeconds() / toUnit.getDuration().toSeconds());
+    public static double convert(double fromValue, ChronoWorkUnit fromUnit, ChronoWorkUnit toUnit) {
+        return fromValue * toUnit.getDuration().toSeconds() / fromUnit.getDuration().toSeconds();
     }
 }

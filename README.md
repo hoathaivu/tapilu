@@ -3,12 +3,14 @@
 Tasks:
 - Use a JS framework for notification windows
 - LLM:
+  - to detect job's info from description (e.g. is onsite/remote/hybrid, location)
   - to detect an email is for reject/accept/etc
   - to map email to job
   - https://github.com/deepseek-ai/DeepSeek-V3?
 - dependency conflicts
 - Docker?
 - Kafka for msg to display?
+  - wait for response for 5min, then pause for 15min before display again
 
 Features:
 - Every 1 hour (configurable in `application.properties`), scrape based on implementation of `JobScraper` interface and display the scraped jobs. User can then do one of the following:
@@ -43,6 +45,9 @@ Past issues
     - Part of Spring Integration, so need to learn about [DSL](https://docs.spring.io/spring-integration/reference/dsl.html)
     - JavaMail API is hidden behind an overhead layer, so low-level action may be hard/impossible to do
     - IDLE is handled based on set of properties (e.g. `simpleContent`, `autoCloseFolder`)
+- Occasionally, nothing was displayed when an email's body is of HTML
+  - Reason: the content contains meta tag which has attributes `http-equiv`, whose value is `content-type`, and `content`, whose value is neither `text\html` nor `text\plain`
+  - Fix: set JTextPane's Document's property `IgnoreCharsetDirective` to `true`, which will tell Document's Parser to ignore the meta data above 
 
 Current issues
 - Email's unsubscribe not working correctly

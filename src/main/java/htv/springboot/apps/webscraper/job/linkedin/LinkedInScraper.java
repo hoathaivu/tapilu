@@ -5,6 +5,7 @@ import htv.springboot.apps.webscraper.job.JobScraper;
 import htv.springboot.apps.webscraper.job.beans.Job;
 import htv.springboot.apps.webscraper.job.beans.JobDetail;
 import htv.springboot.apps.webscraper.job.enums.JobType;
+import htv.springboot.enums.ChronoWorkUnit;
 import htv.springboot.utils.StringUtils;
 import htv.springboot.utils.TimeUtils;
 import org.apache.logging.log4j.LogManager;
@@ -25,7 +26,6 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -92,7 +92,8 @@ public class LinkedInScraper extends BaseScrapper implements JobScraper {
                 if (timeComponents.length == 3 && SHORTHAND_CHRONO_UNIT_MAP.containsKey(timeComponents[1])) {
                     postedOffsetDate = LocalDateTime
                             .now()
-                            .minus(Long.parseLong(timeComponents[0]), SHORTHAND_CHRONO_UNIT_MAP.get(timeComponents[1]))
+                            .minus(Long.parseLong(timeComponents[0]),
+                                    SHORTHAND_CHRONO_UNIT_MAP.get(timeComponents[1]).getChronoUnit())
                             .atOffset(ZoneId.systemDefault().getRules().getOffset(Instant.now()));
                 }
             }
@@ -174,7 +175,7 @@ public class LinkedInScraper extends BaseScrapper implements JobScraper {
         if (slashPos != -1) {
             String timeShorthand = salaryComponent.substring(slashPos + 1).trim();
             try {
-                salary = TimeUtils.convert(salary, timeShorthand, ChronoUnit.YEARS);
+                salary = TimeUtils.convert(salary, timeShorthand, ChronoWorkUnit.YEARS);
             } catch (UnsupportedOperationException e) {
                 LOGGER.trace("The shorthand {} is not supported", timeShorthand);
             }
