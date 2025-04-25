@@ -41,19 +41,15 @@ public class LinkedInScraper extends BaseScrapper implements JobScraper {
     private static final String BASE_HOSTNAME = "https://www.linkedin.com";
     //info about LinkedIn's guest urls: https://gist.github.com/Diegiwg/51c22fa7ec9d92ed9b5d1f537b9e1107
     private static final String JOBS_REQUEST_URL = BASE_HOSTNAME
-            + "/jobs-guest/jobs/api/seeMoreJobPostings/search?"
-            + "f_E=3&f_JT=F,C&f_T=9&f_TPR=r3600&keywords=software engineer&location=United States";
-    private static final String JOB_DETAIL_REQUEST_URL = BASE_HOSTNAME
-            + "/jobs-guest/jobs/api/jobPosting/%s";
-    private static final String JOB_DETAIL_AUTHED_REQUEST_URL = BASE_HOSTNAME
-            + "/jobs/search/?currentJobId=%S";
+            + "/jobs/search/?f_E=3&f_JT=F,C&f_T=9&f_TPR=r43200&geoId=103644278&keywords=java";
+    private static final String JOB_DETAIL_REQUEST_URL = BASE_HOSTNAME + "/jobs/view/%s";
     private static final Pattern JOB_APPLY_URL_PATTERN = Pattern.compile("(?<=\\?url=)[^\"]+");
 
     public List<Job> retrieveJobs() throws IOException {
         Document response = retrievePage(JOBS_REQUEST_URL);
 
         List<Job> jobList = new ArrayList<>();
-        for (Element element : response.body().select("li")) {
+        for (Element element : response.body().select("ul[class*=jobs-search__results-list] > li")) {
             try {
                 Job job = new Job();
                 job.setJobId(element
@@ -64,7 +60,7 @@ public class LinkedInScraper extends BaseScrapper implements JobScraper {
                 job.setCompanyId(element.expectFirst("[class*=base-search-card__subtitle]").text().trim());
                 job.setSource(getJobSiteName());
 
-                parsetJobPostedDate(job, element);
+                parseJobPostedDate(job, element);
                 parseJobDetail(job, element);
 
                 jobList.add(job);
@@ -76,7 +72,7 @@ public class LinkedInScraper extends BaseScrapper implements JobScraper {
         return jobList;
     }
 
-    private void parsetJobPostedDate(Job job, Element jobElement) {
+    private void parseJobPostedDate(Job job, Element jobElement) {
         Element postedDateElement;
         if ((postedDateElement = jobElement.selectFirst("time[class*=job-search-card__listdate]")) != null) {
             LocalDate postedDate = LocalDate
@@ -103,7 +99,8 @@ public class LinkedInScraper extends BaseScrapper implements JobScraper {
     }
 
     private void parseJobDetail(Job job, Element jobElement) throws IOException, ParseException {
-        Element jobDetailElement = retrievePage(String.format(JOB_DETAIL_REQUEST_URL, job.getJobId())).body();
+        String jobDetailUrl = String.format(JOB_DETAIL_REQUEST_URL, job.getJobId());
+        Element jobDetailElement = retrievePage(jobDetailUrl).body();
         try {
             JobDetail jobDetail = new JobDetail();
             jobDetail.setJobId(job.getJobId());
@@ -143,7 +140,7 @@ public class LinkedInScraper extends BaseScrapper implements JobScraper {
             }
 
             if (!applyUrlFound) {
-                job.setJobUrl(String.format(JOB_DETAIL_AUTHED_REQUEST_URL, job.getJobId()));
+                job.setJobUrl(jobDetailUrl);
             }
         } catch (ValidationException | ParseException e) {
             LOGGER.error("Failed to parse JobDetail JsonElement:\n{}", jobDetailElement);
