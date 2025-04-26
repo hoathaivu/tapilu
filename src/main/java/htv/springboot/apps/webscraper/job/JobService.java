@@ -10,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.Message;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import htv.springboot.apps.webscraper.job.db.JobDatabaseService;
 import htv.springboot.browsers.Browser;
@@ -26,7 +25,9 @@ import javax.swing.JOptionPane;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static htv.springboot.utils.MailUtils.UNSUBSCRIBE_HEADER;
 
@@ -44,40 +45,42 @@ public class JobService {
     @Autowired
     private JobDatabaseService databaseService;
 
-    @Autowired
-    private List<JobScraper> jobScrapers;
-
     private static final int SKIP_OPTION = 0;
     private static final int PROCEED_OPTION = 1;
     private static final String[] BUTTON_OPTIONS = new String[] {"Skip", "Proceed"};
 
-    @Scheduled(fixedDelayString = "${htv.springboot.job.schedule-fixed-delay}", timeUnit = TimeUnit.HOURS)
-    public void scheduleScraping() throws Exception {
-        LOGGER.info("Start scheduleScraping");
+    private final Queue<Job> jobQueue = new ConcurrentLinkedQueue<>();
+    private final AtomicBoolean scrapeProcessingStart = new AtomicBoolean(false);
 
-        for (JobScraper jobScraper : jobScrapers) {
-            List<Job> scrapedJobs = jobScraper.retrieveJobs();
+    public void updateAndProcessJobQueue(List<Job> scrapedJobs) {
+        jobQueue.addAll(scrapedJobs);
 
-            LOGGER.info("Scraped {} jobs from {}", scrapedJobs.size(), jobScraper.getJobSiteName());
-            for (Job job : scrapedJobs) {
-                try {
-                    LOGGER.trace("Processing job {}", job.getJobId());
-                    if (!databaseService.isSeenJob(job)) {
-                        LOGGER.trace("New job");
-                        processNewJob(job);
-                    } else if (databaseService.isBeforeDays(job, 1)) {
-                        LOGGER.trace("Job reappeared");
-                        databaseService.updateJobStatsEncounter(job);
-                    } else {
-                        LOGGER.trace("Job already processed");
-                    }
-                } catch (Exception e) {
-                    LOGGER.error(e.getMessage(), e);
+        if (scrapeProcessingStart.compareAndSet(false, true)) {
+            processScrapedJobs();
+        }
+    }
+
+    private void processScrapedJobs() {
+        Job job;
+        while ((job = jobQueue.poll()) != null) {
+            try {
+                LOGGER.trace("Processing job {}", job.getJobId());
+                if (!databaseService.isSeenJob(job)) {
+                    LOGGER.trace("New job");
+                    processNewJob(job);
+                } else if (databaseService.isBeforeDays(job, 1)) {
+                    LOGGER.trace("Job reappeared");
+                    databaseService.updateJobStatsEncounter(job);
+                } else {
+                    LOGGER.trace("Job already processed");
                 }
+            } catch (Exception e) {
+                LOGGER.error(e.getMessage(), e);
             }
         }
+        scrapeProcessingStart.set(false);
 
-        LOGGER.info("Finished scheduleScraping");
+        LOGGER.info("Finish processing scraped job(s)");
     }
 
     private void processNewJob(Job job) {

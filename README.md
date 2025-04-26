@@ -2,6 +2,8 @@
 
 Tasks:
 - Use a JS framework for notification windows
+  - htmx
+  - Angular
 - LLM:
   - to detect job's info from description (e.g. is onsite/remote/hybrid, location)
   - to detect an email is for reject/accept/etc
