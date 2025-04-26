@@ -56,7 +56,10 @@ public class JobService {
         jobQueue.addAll(scrapedJobs);
 
         if (scrapeProcessingStart.compareAndSet(false, true)) {
+            LOGGER.trace("Scrape process has not been started - starting");
             processScrapedJobs();
+        } else {
+            LOGGER.trace("Scrape process has been started already");
         }
     }
 

@@ -161,8 +161,12 @@ public class LinkedInScraper extends BaseScrapper implements JobScraper {
 
     private double parseSalaryStr(String salaryComponent) throws ParseException {
         salaryComponent = salaryComponent.trim();
-        if (salaryComponent.startsWith("$")) {
+        if (!salaryComponent.isEmpty() && !Character.isDigit(salaryComponent.charAt(0))) {
             salaryComponent = salaryComponent.substring(1);
+        }
+
+        if (salaryComponent.isEmpty()) {
+            return 0;
         }
 
         int slashPos = salaryComponent.indexOf("/");

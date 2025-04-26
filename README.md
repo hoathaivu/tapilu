@@ -50,6 +50,8 @@ Past issues
 - Occasionally, nothing was displayed when an email's body is of HTML
   - Reason: the content contains meta tag which has attributes `http-equiv`, whose value is `content-type`, and `content`, whose value is neither `text\html` nor `text\plain`
   - Fix: set JTextPane's Document's property `IgnoreCharsetDirective` to `true`, which will tell Document's Parser to ignore the meta data above 
+- Sometimes salary contains non-US currency
+  - This is considered data errors since we are looking for jobs in US only 
 
 Current issues
 - Email's unsubscribe not working correctly
