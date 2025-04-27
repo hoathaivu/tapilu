@@ -87,16 +87,8 @@ public class JobService {
     }
 
     private void processNewJob(Job job) {
-        //create new record in jobs
-        databaseService.createNewJob(job);
-
-        //create new record in jobs_details
-        databaseService.createNewJobDetail(job.getJobDetail());
-
-        //create new record in jobs_statistics
-        createNewJobStatistics(job);
-
         int selected = JavaUtils.createOptionWindow("New Job", StringUtils.escape(job.toString()), BUTTON_OPTIONS);
+        createInitialRecords(job);
         switch (selected) {
             case JOptionPane.CLOSED_OPTION:
                 LOGGER.trace("Closed option clicked");
@@ -115,7 +107,14 @@ public class JobService {
         }
     }
 
-    private void createNewJobStatistics(Job job) {
+    private void createInitialRecords(Job job) {
+        //create new record in jobs
+        databaseService.createNewJob(job);
+
+        //create new record in jobs_details
+        databaseService.createNewJobDetail(job.getJobDetail());
+
+        //create new record in jobs_statistics
         Map<String, CoLExcelBean> coLMap = coLService.getCoL(job.getJobDetail().getJobLocation().split("\\|"));
         double maxCoL = 0;
         for (CoLExcelBean bean : coLMap.values()) {
