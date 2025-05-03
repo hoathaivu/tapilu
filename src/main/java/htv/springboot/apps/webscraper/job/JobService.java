@@ -56,34 +56,30 @@ public class JobService {
         jobQueue.addAll(scrapedJobs);
 
         if (scrapeProcessingStart.compareAndSet(false, true)) {
-            LOGGER.trace("Scrape process has not been started - starting");
-            processScrapedJobs();
-        } else {
-            LOGGER.trace("Scrape process has been started already");
-        }
-    }
-
-    private void processScrapedJobs() {
-        Job job;
-        while ((job = jobQueue.poll()) != null) {
-            try {
-                LOGGER.trace("Processing job {}", job.getJobId());
-                if (!databaseService.isSeenJob(job)) {
-                    LOGGER.trace("New job");
-                    processNewJob(job);
-                } else if (databaseService.isBeforeDays(job, 1)) {
-                    LOGGER.trace("Job reappeared");
-                    databaseService.updateJobStatsEncounter(job);
-                } else {
-                    LOGGER.trace("Job already processed");
+            LOGGER.info("Scrape process has not been started - starting");
+            Job job;
+            while ((job = jobQueue.poll()) != null) {
+                try {
+                    LOGGER.trace("Processing job {}", job.getJobId());
+                    if (!databaseService.isSeenJob(job)) {
+                        LOGGER.trace("New job");
+                        processNewJob(job);
+                    } else if (databaseService.isBeforeDays(job, 1)) {
+                        LOGGER.trace("Job reappeared");
+                        databaseService.updateJobStatsEncounter(job);
+                    } else {
+                        LOGGER.trace("Job already processed");
+                    }
+                } catch (Exception e) {
+                    LOGGER.error(e.getMessage(), e);
                 }
-            } catch (Exception e) {
-                LOGGER.error(e.getMessage(), e);
             }
-        }
-        scrapeProcessingStart.set(false);
+            scrapeProcessingStart.set(false);
 
-        LOGGER.info("Finish processing scraped job(s)");
+            LOGGER.info("Finish processing scraped job(s)");
+        } else {
+            LOGGER.info("Scrape process has been started already");
+        }
     }
 
     private void processNewJob(Job job) {
@@ -149,12 +145,12 @@ public class JobService {
          */
         MimeMessage email = mimeMsg.getPayload();
 
-        String msg = String.format("From: %s\nTo: %s\nSubject: %s\nContent:\n",
+        String msg = String.format("From: %s\nTo: %s\nSubject: %s",
                 StringUtils.toString(email.getFrom()),
                 StringUtils.toString(email.getAllRecipients()),
                 email.getSubject());
 
-        msg = StringUtils.escape(msg) + MailUtils.getEmailContent(email);
+        msg = StringUtils.escape(msg) + "\nContent:\n" + MailUtils.getEmailContent(email);
 
         String[] buttons = email.getHeader(UNSUBSCRIBE_HEADER) != null ?
                 AD_EMAIL_BUTTON_OPTIONS : NORM_EMAIL_BUTTON_OPTIONS;

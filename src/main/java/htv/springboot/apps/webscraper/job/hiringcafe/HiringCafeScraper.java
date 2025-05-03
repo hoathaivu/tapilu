@@ -46,9 +46,11 @@ public class HiringCafeScraper extends BaseScrapper implements JobScraper {
                 job.setSource(getJobSiteName());
 
                 JsonObject processedJob = jsonObject.getAsJsonObject("v5_processed_job_data");
-                job.setCompanyId(processedJob.has("company_name") && !processedJob.get("company_name").isJsonNull() ?
+                job.setCompanyId(hasNonNullValue(processedJob, "company_name") ?
                         processedJob.get("company_name").getAsString()
-                        : processedJob.get("company_website").getAsString());
+                        : hasNonNullValue(processedJob, "company_website") ?
+                            processedJob.get("company_website").getAsString()
+                            : jsonObject.get("board_token").getAsString());
                 job.setPostedDatetime(OffsetDateTime.parse(processedJob.get("estimated_publish_date").getAsString()));
 
                 JsonObject jobInformation = jsonObject.getAsJsonObject("job_information");
@@ -91,6 +93,10 @@ public class HiringCafeScraper extends BaseScrapper implements JobScraper {
         jobDetail.setJobDescription(jobInformation.get("description").getAsString());
 
         job.setJobDetail(jobDetail);
+    }
+
+    private boolean hasNonNullValue(JsonObject element, String key) {
+        return element.has(key) && !element.get(key).isJsonNull();
     }
 
     @Override

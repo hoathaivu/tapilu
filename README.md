@@ -9,6 +9,8 @@ Tasks:
   - to detect an email is for reject/accept/etc
   - to map email to job
   - https://github.com/deepseek-ai/DeepSeek-V3?
+    - Installation: https://github.com/sgl-project/sglang/blob/main/docs/references/amd.md
+    - May need 400GB (?)
 - dependency conflicts
 - Docker?
 - Kafka for msg to display?
@@ -26,15 +28,32 @@ Features:
   - Unsubscribe and Delete (if possible) (i.e. unsubscribe from email's sender and move email to Trash folder)
 
 WSL:
-- docker run -p 9042:9042 --rm --name cassandra -d cassandra:latest
-- vi tables.cql
-- docker cp tables.cql cassandra:tables.cql
-- docker exec -it cassandra bash -c "cqlsh -u cassandra -p cassandra"
-  - give it a minute or two before running, otherwise can run into following error : `Connection error: ('Unable to connect to any servers', {'127.0.0.1:9042': ConnectionRefusedError(111, "Tried connecting to [('127.0.0.1', 9042)]. Last error: Connection refused")})`
+1. docker run -p 9042:9042 --rm --name cassandra -d cassandra:latest
+2. vi tables.cql
+3. docker cp tables.cql cassandra:tables.cql
+4. docker exec -it cassandra bash -c "cqlsh -u cassandra -p cassandra"
+   1. give it a minute or two before running, otherwise can run into following error : `Connection error: ('Unable to connect to any servers', {'127.0.0.1:9042': ConnectionRefusedError(111, "Tried connecting to [('127.0.0.1', 9042)]. Last error: Connection refused")})`
 
 CQL:
-- SOURCE 'tables.cql'
+1. SOURCE 'tables.cql'
 
+DeepSeek:
+- NVIDIA Container Toolkit (https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
+  1. Install NVIDIA Driver for GPU Support using NVIDIA GeForce Game Ready
+  2. Install and setup toolkit
+     1. `curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+     && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+       sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+       sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list`
+     2. `sudo apt-get update`
+     3. `sudo apt-get install -y nvidia-container-toolkit`
+     4. `sudo nvidia-ctk runtime configure --runtime=docker`
+     5. `sudo systemctl restart docker`
+  3. Confirm installation: `sudo docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi`
+- SGLang
+  1. `docker pull lmsysorg/sglang:latest`
+  2. `docker run --gpus all --shm-size 32g -p 30000:30000 -v ~/.cache/huggingface:/root/.cache/huggingface --ipc=host lmsysorg/sglang:latest \
+    python3 -m sglang.launch_server --model deepseek-ai/DeepSeek-V3 --tp 1 --trust-remote-code --port 30000`
 
 Past issues
 - `com.sun.mail:jakarta.mail` vs `org.springframework.integration:spring-integration-mail`
@@ -55,3 +74,6 @@ Past issues
 
 Current issues
 - Email's unsubscribe not working correctly
+- GPU with 8GB is not enough
+  - Attempt to change [optimization config](https://docs.sglang.ai/backend/server_arguments.html#optimization) but same error
+    - Failed config: `--mem-fraction-static 0.1 --chunked-prefill-size 1024 --torch-compile-max-bs 2`
