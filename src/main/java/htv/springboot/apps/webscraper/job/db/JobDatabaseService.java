@@ -38,6 +38,19 @@ public class JobDatabaseService {
     @Autowired
     private JobsStatisticsRepository jobsStatisticsRepository;
 
+    public Job getJob(String jobId) {
+        Optional<Job> jobOpt = jobsRepository.findById(jobId);
+
+        if (jobOpt.isEmpty()) {
+            return null;
+        }
+
+        Job job = jobOpt.get();
+        job.setJobDetail(jobsDetailsRepository.findById(jobId).orElse(null));
+
+        return job;
+    }
+
     public boolean isSeenJob(Job job) {
         return jobsRepository.existsById(job.getJobId());
     }

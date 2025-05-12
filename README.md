@@ -28,7 +28,8 @@ Features:
   - Unsubscribe and Delete (if possible) (i.e. unsubscribe from email's sender and move email to Trash folder)
 
 WSL:
-1. docker run -p 9042:9042 --rm --name cassandra -d cassandra:latest
+1. (If volume not already created) docker volume create db-data
+2. docker run -p 9042:9042 --rm --name cassandra -d -v db-data:/cass cassandra:latest
 2. vi tables.cql
 3. docker cp tables.cql cassandra:tables.cql
 4. docker exec -it cassandra bash -c "cqlsh -u cassandra -p cassandra"
@@ -70,7 +71,9 @@ Past issues
   - Reason: the content contains meta tag which has attributes `http-equiv`, whose value is `content-type`, and `content`, whose value is neither `text\html` nor `text\plain`
   - Fix: set JTextPane's Document's property `IgnoreCharsetDirective` to `true`, which will tell Document's Parser to ignore the meta data above 
 - Sometimes salary contains non-US currency
-  - This is considered data errors since we are looking for jobs in US only 
+  - This is considered data errors since we are looking for jobs in US only
+- HTMX
+  - Require backend to generate HTML fragments, which HTMX will use to update DOM
 
 Current issues
 - Email's unsubscribe not working correctly

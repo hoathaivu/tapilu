@@ -1,5 +1,8 @@
 package htv.springboot.utils;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
@@ -11,6 +14,9 @@ import static javax.swing.JOptionPane.QUESTION_MESSAGE;
 import static javax.swing.JOptionPane.YES_NO_OPTION;
 
 public class JavaUtils {
+
+    private static final Logger LOGGER = LogManager.getLogger();
+
     public static int createOptionWindow(String title, String msg, String[] options) {
         if (msg.length() > 500) {
             return createOptionWindow(title, msg, options, 0, 1000, 600);
@@ -21,6 +27,7 @@ public class JavaUtils {
 
     public static int createOptionWindow(
             String title, String msg, String[] options, int defaultOptionIndex, int width, int height) {
+        LOGGER.trace("Preparing to display");
         JTextPane jtp = new JTextPane();
         jtp.setContentType("text/html; charset=UTF-8");
         //if not set, ChangedCharSetException will be thrown silently if the HTML in msg has the meta tag with

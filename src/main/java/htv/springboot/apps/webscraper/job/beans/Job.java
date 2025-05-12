@@ -27,7 +27,7 @@ public class Job {
     @Override
     public String toString() {
         return String.format(
-                "source: %s\nid: %s\ncompany: %s\npostedDate: %s\ntitle: %s\nurl: %s",
+                "source: %s\nid: %s\ncompany: %s\nposted date: %s\ntitle: %s\nurl: %s",
                 getSource(),
                 getJobId(),
                 getCompanyId(),

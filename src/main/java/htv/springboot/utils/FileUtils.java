@@ -8,11 +8,17 @@ import htv.springboot.beans.ExcelBean;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class FileUtils {
 
@@ -60,5 +66,27 @@ public class FileUtils {
         Cell cell = cells.getCell(i);
         return cell.getCellType() == CellType.STRING ?
                 cell.getStringCellValue().trim() : String.valueOf(cell.getNumericCellValue());
+    }
+
+    public static void mergeFiles(String dirPath, String mergedFileName, String... fileNames) throws IOException {
+        File dir = new File(dirPath);
+        if (dir.isDirectory() && fileNames.length > 0) {
+            Set<String> mergedFileNames = new HashSet<>();
+
+            try (OutputStream out = Files.newOutputStream(
+                    Paths.get(dir.getPath(), mergedFileName),
+                    StandardOpenOption.CREATE_NEW,
+                    StandardOpenOption.WRITE,
+                    StandardOpenOption.APPEND)) {
+                for (String fileName : fileNames) {
+                    if (mergedFileNames.contains(fileName)) {
+                        continue;
+                    }
+
+                    Files.copy(Paths.get(dir.getPath(), fileName), out);
+                    mergedFileNames.add(fileName);
+                }
+            }
+        }
     }
 }
