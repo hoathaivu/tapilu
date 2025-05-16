@@ -21,8 +21,8 @@ import htv.springboot.apps.webscraper.job.costofliving.CostOfLivingService;
 import htv.springboot.apps.webscraper.job.costofliving.beans.CoLExcelBean;
 import org.springframework.web.client.RestClient;
 
-import javax.swing.JOptionPane;
 import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -30,6 +30,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static htv.springboot.utils.MailUtils.UNSUBSCRIBE_HEADER;
+import static java.time.OffsetDateTime.now;
+import static javax.swing.JOptionPane.CLOSED_OPTION;
 
 @Service
 public class JobService {
@@ -47,13 +49,20 @@ public class JobService {
 
     private static final int SKIP_OPTION = 0;
     private static final int PROCEED_OPTION = 1;
-    private static final String[] BUTTON_OPTIONS = new String[] {"Skip", "Proceed"};
+    private static final int PAUSE_1_DAY_OPTION = 2;
+    private static final String[] BUTTON_OPTIONS = new String[] {"Skip", "Proceed", "Pause for 1 day"};
+
+    private static OffsetDateTime scrapeProcessPauseStartTime = null;
 
     private final Queue<Job> jobQueue = new ConcurrentLinkedQueue<>();
     private final AtomicBoolean scrapeProcessingStart = new AtomicBoolean(false);
 
     public void updateAndProcessJobQueue(List<Job> scrapedJobs) {
         jobQueue.addAll(scrapedJobs);
+
+        if (isInPausePeriod()) {
+            return;
+        }
 
         if (scrapeProcessingStart.compareAndSet(false, true)) {
             LOGGER.info("Scrape process has not been started - starting");
@@ -64,6 +73,10 @@ public class JobService {
                     if (!databaseService.isSeenJob(job)) {
                         LOGGER.trace("New job");
                         processNewJob(job);
+
+                        if (isInPausePeriod()) {
+                            break;
+                        }
                     } else if (databaseService.isBeforeDays(job, 1)) {
                         LOGGER.trace("Job reappeared");
                         databaseService.updateJobStatsEncounter(job);
@@ -82,21 +95,37 @@ public class JobService {
         }
     }
 
+    private boolean isInPausePeriod() {
+        if (scrapeProcessPauseStartTime != null) {
+            if (now().minusDays(1).isBefore(scrapeProcessPauseStartTime)) {
+                LOGGER.info("Process is in pause period");
+                return true;
+            } else {
+                LOGGER.info("Pause period is over");
+                scrapeProcessPauseStartTime = null;
+            }
+        }
+
+        return false;
+    }
+
     private void processNewJob(Job job) {
         int selected = JavaUtils.createOptionWindow("New Job", StringUtils.escape(job.toString()), BUTTON_OPTIONS);
-        createInitialRecords(job);
+        LOGGER.trace("{} option clicked", selected == CLOSED_OPTION ? "Close" : BUTTON_OPTIONS[selected]);
         switch (selected) {
-            case JOptionPane.CLOSED_OPTION:
-                LOGGER.trace("Closed option clicked");
+            case CLOSED_OPTION:
             case SKIP_OPTION:
-                LOGGER.trace("Skip option clicked");
+                createInitialRecords(job);
                 databaseService.updateJobStatsStatus(job.getJobId(), JobStatsStatus.SKIPPED);
                 break;
             case PROCEED_OPTION:
-                LOGGER.trace("Proceed option clicked");
+                createInitialRecords(job);
                 browser.openUrl(job.getJobUrl());
                 databaseService.createNewAppliedJob(job);
                 databaseService.updateJobStatsStatus(job.getJobId(), JobStatsStatus.APPLIED);
+                break;
+            case PAUSE_1_DAY_OPTION:
+                scrapeProcessPauseStartTime = now();
                 break;
             default:
                 LOGGER.error("Unknown option: {}", selected);
