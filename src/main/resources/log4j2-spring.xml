@@ -12,7 +12,7 @@
     </Appenders>
 
     <Loggers>
-        <Logger name="springboot" level="info"/>
+        <Logger name="htv.springboot" level="info"/>
         <Root level="info">
             <AppenderRef ref="CONSOLE"/>
         </Root>

@@ -41,3 +41,6 @@ Past issues
     - Part of Spring Integration, so need to learn about [DSL](https://docs.spring.io/spring-integration/reference/dsl.html)
     - JavaMail API is hidden behind an overhead layer, so low-level action may be hard/impossible to do
     - IDLE is handled based on set of properties (e.g. `simpleContent`, `autoCloseFolder`)
+
+Current issues
+- Email's unsubscribe not working correctly

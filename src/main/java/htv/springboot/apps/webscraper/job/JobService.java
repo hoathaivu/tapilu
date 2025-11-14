@@ -129,7 +129,7 @@ public class JobService {
     private RestClient restClient;
 
     public void processNewEmail(Message<MimeMessage> mimeMsg) throws MessagingException, IOException {
-        LOGGER.info("Start processNewEmails");
+        LOGGER.info("Start processNewEmail");
         /**
          * 1. When receive job email, check email's content for info
          * 	a. If new jobAppliedStatus, update jobs_applied. If not rejected, go to step #2
@@ -168,6 +168,6 @@ public class JobService {
             MailUtils.deleteFlaggedEmails(emailAddress, emailAppPassword, Flags.Flag.USER);
         }
 
-        LOGGER.info("Finished processNewEmails");
+        LOGGER.info("Finished processNewEmail");
     }
 }

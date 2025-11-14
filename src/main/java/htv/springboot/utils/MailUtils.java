@@ -107,12 +107,14 @@ public class MailUtils {
         }
 
         if (!StringUtils.isBlank(unsubscribeUrl)) {
+            LOGGER.trace("Value of {}: {}", UNSUBSCRIBE_HEADER, unsubscribeUrl);
             unsubscribeUrl = unsubscribeUrl.substring(3, unsubscribeUrl.length() - 3);
             RestClient.RequestBodySpec spec = restClient
                     .post()
                     .uri(unsubscribeUrl);
 
             if (!StringUtils.isBlank(unsubscribeHeaderVal)) {
+                LOGGER.trace("Value of {}: {}", UNSUBSCRIBE_POST_HEADER, unsubscribeHeaderVal);
                 String[] headerParts = unsubscribeHeaderVal.split("=");
                 spec.header(headerParts[0], headerParts[1]);
             }
